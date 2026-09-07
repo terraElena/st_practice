@@ -6,13 +6,13 @@ PROGRAM Unknown_frequency
     stop_resetButton: BOOL; //  Кнопка пуск и сброс
     //Внутренние переменные
     latchbit: BOOL; //Флаг хранения статуса запуска
-    timer1sec: TON; // Таймер на 1 секунду
+    timer10sec: TON; // Таймер на 1 секунду
     counterFr: CTU; // Счетчик
-    doneFlag: BOOL; // Флаг окончания измерения
     finalFreqValue: DINT; // Значение для дисплея
-    counterCU_signal: BOOL := FALSE; // Cигнал на вход CU счётчика
+    counterCU_signal: BOOL; // Cигнал на вход CU счётчика
+    elapsedTime : TIME := T#0s;
     END_VAR
-    timer1sec.PT := T#1s; //настройка таймера
+
 //Самоблокировка 
     IF startButton AND NOT stop_resetButton THEN
         latchbit:=TRUE;
@@ -20,12 +20,13 @@ PROGRAM Unknown_frequency
           latchbit:=FALSE; 
     END_IF;
 
-    timer1sec(IN := latchbit, PT := T#1s);
+    timer10sec(IN := latchbit, PT := T#1s);
+    elapsedTime := timer10sec.ET;
 // Счетчик импульсов
-    counterCU_signal := latchbit AND NOT timer1sec.Q AND unknownFrequencyInput;
+    counterCU_signal := latchbit AND NOT timer10sec.Q AND unknownFrequencyInput;
 
+    finalFreqValue :=  counterFr.CV;   // текущее значение частоты в Герцах (кол-во импульсов за секунду)
 //Сброс счётчика (RES) - только по Stop
     counterFr(CU := counterCU_signal, R := stop_resetButton, PV := 0);
      
-    finalFreqValue :=  counterFr.CV;   // текущее значение частоты в Герцах (кол-во импульсов за секунду)
 END_PROGRAM
